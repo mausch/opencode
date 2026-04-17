@@ -40,5 +40,6 @@ export function schema<T>(schema: Schema<T>, data: unknown, source: string): T {
   throw new InvalidError({
     path: source,
     issues: parsed.error.issues,
+    tree: z.treeifyError(parsed.error),
   })
 }

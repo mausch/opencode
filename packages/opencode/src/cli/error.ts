@@ -14,6 +14,22 @@ function isTaggedError(error: unknown, tag: string): boolean {
   )
 }
 
+function formatTree(tree: { errors: string[]; properties?: Record<string, unknown> }, path = ""): string[] {
+  const lines: string[] = []
+  if (tree.errors) {
+    for (const err of tree.errors) {
+      lines.push("↳ " + (path || "(root)") + ": " + err)
+    }
+  }
+  if (tree.properties) {
+    for (const [key, sub] of Object.entries(tree.properties)) {
+      const subPath = path ? path + "." + key : key
+      lines.push(...formatTree(sub as { errors: string[]; properties?: Record<string, unknown> }, subPath))
+    }
+  }
+  return lines
+}
+
 export function FormatError(input: unknown) {
   // MCPFailed: { name: string }
   if (NamedError.hasName(input, "MCPFailed")) {
@@ -65,9 +81,12 @@ export function FormatError(input: unknown) {
     const path = data?.path
     const message = data?.message
     const issues: Array<{ message: string; path: string[] }> = Array.isArray(data?.issues) ? data.issues : []
+    const tree = data?.tree as { errors: string[]; properties?: Record<string, unknown> } | undefined
     return [
       `Configuration is invalid${path && path !== "config" ? ` at ${path}` : ""}` + (message ? `: ${message}` : ""),
-      ...issues.map((issue) => "↳ " + issue.message + " " + issue.path.join(".")),
+      ...(tree
+        ? formatTree(tree)
+        : issues.map((issue) => "↳ " + issue.message + " " + issue.path.join("."))),
     ].join("\n")
   }
 
