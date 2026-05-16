@@ -1665,7 +1665,7 @@ export const layer = Layer.effect(
         return yield* new ModelNotFoundError({ providerID, modelID, suggestions })
       }
 
-      const info = provider.models[modelID]
+      const info = provider.models[modelID] ?? provider.models[`${providerID}/${modelID}`]
       if (!info) {
         const current = modelSuggestions(provider, modelID, runtimeFlags.enableExperimentalModels)
         const suggestions = current.length
