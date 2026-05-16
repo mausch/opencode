@@ -51,6 +51,30 @@ describe("cli.error", () => {
     expect(FormatError({ _tag: "ConfigJsonError", ...data })).toBe(expected)
   })
 
+  test("formats nested config issues with concrete field paths", () => {
+    const data = {
+      path: "/tmp/opencode.jsonc",
+      issues: [{ message: "Expected string", path: ["mcp", "postgres", "command"] }],
+    }
+
+    const formatted = FormatError({ name: "ConfigInvalidError", data })
+
+    expect(formatted).toContain("Configuration is invalid at /tmp/opencode.jsonc")
+    expect(formatted).toContain("Expected string mcp.postgres.command")
+  })
+
+  test("formats unrecognized key config issues concretely", () => {
+    const data = {
+      path: "/tmp/opencode.jsonc",
+      issues: [{ message: "Unrecognized key: unknown_key", path: [] }],
+    }
+
+    const formatted = FormatError({ name: "ConfigInvalidError", data })
+
+    expect(formatted).toContain("Configuration is invalid at /tmp/opencode.jsonc")
+    expect(formatted).toContain("Unrecognized key: unknown_key")
+  })
+
   test("formats account transport errors clearly", () => {
     const error = new AccountTransportError({
       method: "POST",
