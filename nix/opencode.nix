@@ -52,9 +52,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    cd ./packages/opencode
+    cd ./packages/cli
     bun --bun ./script/build.ts --single --skip-install
+    cd ../opencode
     bun --bun ./script/schema.ts schema.json
+    cd ../cli
 
     runHook postBuild
   '';
@@ -62,8 +64,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 dist/opencode-*/bin/opencode $out/bin/opencode
-    install -Dm644 schema.json $out/share/opencode/schema.json
+    install -Dm755 dist/cli-*/bin/opencode2 $out/bin/opencode
+    install -Dm644 ../opencode/schema.json $out/share/opencode/schema.json
 
     wrapProgram $out/bin/opencode \
       --prefix PATH : ${
@@ -80,10 +82,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   postInstall = lib.optionalString (stdenvNoCC.buildPlatform.canExecute stdenvNoCC.hostPlatform) ''
-    # trick yargs into also generating zsh completions
     installShellCompletion --cmd opencode \
-      --bash <($out/bin/opencode completion) \
-      --zsh <(SHELL=/bin/zsh $out/bin/opencode completion)
+      --bash <($out/bin/opencode --completions bash) \
+      --zsh <($out/bin/opencode --completions zsh)
   '';
 
   nativeInstallCheckInputs = [
